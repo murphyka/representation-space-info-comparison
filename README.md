@@ -2,7 +2,7 @@
 Code accompanying "Comparing information content of representation spaces for disentanglement with VAE ensembles" (2024)
 by Kieran A Murphy, Sam Dillavou, and Dani S. Bassett.
 
-**TL;DR:** We propose a lightweight methodology for comparing the information content of channels of VAEs.  Given an ensemble of O(50) trained VAEs, we find pieces of information that are repeatedly found across training runs, performing an empirical study of information fragmentation in the context of disentanglement.
+**TL;DR:** We propose a lightweight methodology for comparing the information content of channels of VAEs.  Given an ensemble of O(50) trained VAEs, we find pieces of information that are repeatedly found across training runs, allowing an empirical study of information fragmentation in the context of disentanglement.
 
 ![Figure from the manuscript that gives a high level overview of the proposed method.](/images/high_level.png)
 
