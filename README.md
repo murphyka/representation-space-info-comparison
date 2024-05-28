@@ -17,7 +17,7 @@ The iPython notebook `fashion_mnist_example.ipynb` will download accessory files
 - `utils.py`: The same file in this repository, just provided for convenience.
   
 The notebook calculates distinguishability matrices for the channels of the sample model, calculating Bhattacharyya coefficients with a random sample of images from Fashion-MNIST, and then computes the pairwise VI and NMI values from the included Bhattacharyya matrices.
-The VI and NMI values are then clustered with sklearn's OPTICS and visualized in the same manner as Figs. 4 and 5.  Below, we reproduce the parts of those figures for the `cars3d`, MNIST, and Fashion-MNIST datasets, along with latent traversals.
+The VI and NMI values are then clustered with sklearn's OPTICS and visualized in the same manner as Figs. 4 and 5.  Below, we reproduce the parts of those figures for the MNIST and Fashion-MNIST datasets, along with latent traversals.
 ![Figure from the manuscript showing structure found in an ensemble of beta VAEs trained on the MNIST dataset.  A block diagonal matrix of the similarities between channels indicates that there are channels repeatedly found throughout the ensemble. Latent traversals from each hot spot visualize the information content.](/images/mnist.png)
 
 ![Figure from the manuscript showing structure found in an ensemble of beta VAEs trained on the Fashion MNIST dataset.  A block diagonal matrix of the similarities between channels indicates that there are channels repeatedly found throughout the ensemble. Latent traversals from each hot spot visualize the information content.](/images/fashion_mnist.png)
