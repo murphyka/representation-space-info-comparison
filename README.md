@@ -11,7 +11,7 @@ Contents:
 - `fashion_mnist_example.ipynb`: an iPython notebook that reproduces the workflow to analyze structure in ensembles of trained channels
 - `ensemble_learning.ipynb`: an iPython notebook that reproduces the ensemble learning example from Sec. 4.4 of the manuscript.
 
-The iPython notebook `fashion_mnist_example.ipynb` will download accessory files (uploaded to [google drive](https://drive.google.com/file/d/1LU5Lcf-wPR9UnOfWNVyXuZRxDQeOzXzX/view?usp=drive_link))
+The iPython notebook `fashion_mnist_example.ipynb` will download accessory files (zipped and uploaded to [google drive](https://drive.google.com/file/d/1LU5Lcf-wPR9UnOfWNVyXuZRxDQeOzXzX/view?usp=drive_link))
 - `trained_fashion_mnist_beta4/`: one $\beta$-VAE model trained on Fashion-MNIST with $\beta=4$,
 - `bhats.npy`: a sample of 300 $\times$ 300 Bhattacharyya distance matrices, coming from 25 $\beta$-VAEs trained on Fashion-MNIST with 10 latent dimensions each, so 250 matrices (175MB).
 - `utils.py`: The same file in this repository, just provided for convenience.
