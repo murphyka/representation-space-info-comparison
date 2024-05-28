@@ -4,6 +4,8 @@ by Kieran A Murphy, Sam Dillavou, and Dani S. Bassett.
 
 **TL;DR:** We propose a lightweight methodology for comparing the information content of channels of VAEs.  Given an ensemble of O(50) trained VAEs, we find pieces of information that are repeatedly found across training runs, performing an empirical study of information fragmentation in the context of disentanglement.
 
+![Figure from the manuscript that gives a high level overview of the proposed method.](/images/high_level_fig.png)
+
 Contents:
 - `utils.py`: Code to compute pairwise Bhattacharyya distances given a list of Gaussian posterior means and log variances for a sample of datapoints, and then our proposed generalizations for the pairwise normalized mutual information (NMI) and variation of information (VI) values given a list of Bhattacharyya distance matrices
 - `fashion_mnist_example.ipynb`: an iPython notebook that reproduces the workflow to analyze structure in ensembles of trained channels
@@ -15,4 +17,6 @@ The iPython notebook `fashion_mnist_example.ipynb` will download accessory files
 - `utils.py`: The same file in this repository, just provided for convenience.
   
 The notebook calculates distinguishability matrices for the channels of the sample model, calculating Bhattacharyya coefficients with a random sample of images from Fashion-MNIST, and then computes the pairwise VI and NMI values from the included Bhattacharyya matrices.
-The VI and NMI values are then clustered with sklearn's OPTICS and visualized in the same manner as Fig. 5, reproduced below:
+The VI and NMI values are then clustered with sklearn's OPTICS and visualized in the same manner as Figs. 4 and 5; the latter is reproduced below:
+![Figure from the manuscript showing structure found in an ensemble of beta VAEs trained on the Fashion MNIST dataset.  A roughly block diagonal matrix of the similarities between channels indicates that there are channels repeatedly found throughout the ensemble. Latent traversals from each hot spot visualize the information content.](/images/fashion_mnist_figure.png)
+
