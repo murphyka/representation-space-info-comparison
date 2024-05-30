@@ -68,7 +68,8 @@ def bhattacharyya_dist_mat_tf(mus, logvars):
   term2 = 0.5 * tf.math.log(determinant_sigma / tf.sqrt(determinant_sigma1 * determinant_sigma2))
   return term1+term2
 
-def compute_pairwise_similarities(bhat_distance_mats):
+
+def compute_pairwise_similarities(bhat_distance_mats, bhat_distance_mats2=None):
   """Computes the full set of pairwise VI and NMI comparisons given a list of Bhattacharyya distance matrices.
   Requires that the distance matrices were computed with the same set of data points, in the same order. 
 
@@ -77,27 +78,37 @@ def compute_pairwise_similarities(bhat_distance_mats):
   Returns:
     [M, M] array of pairwise VI, [M, M] array of pairwise NMI 
   """
-  pairwise_nmi = np.eye(bhat_distance_mats.shape[0]) * 0.
-  pairwise_vi = np.eye(bhat_distance_mats.shape[0]) * 0.
+  if bhat_distance_mats2 is None:
+    bhat_distance_mats2 = bhat_distance_mats
+    symmetric_mat = 1  ## use this bit to skip half of the computations
+  else:
+    symmetric_mat = 0
+
+  pairwise_nmi = np.zeros((bhat_distance_mats.shape[0], bhat_distance_mats2.shape[0]))
+  pairwise_vi = np.zeros((bhat_distance_mats.shape[0], bhat_distance_mats2.shape[0]))
 
   # Compute I(X;U) with the lower bound from Kolchinsky + Tracey 2017
-  infos = -np.mean(np.log2(np.mean(np.exp(-bhat_distance_mats), axis=-1)), axis=-1)
+  infos1 = -np.mean(np.log2(np.mean(np.exp(-bhat_distance_mats), axis=-1)), axis=-1)
+  infos2 = -np.mean(np.log2(np.mean(np.exp(-bhat_distance_mats2), axis=-1)), axis=-1)
   # Compute I(X;U,U`) as the info about the dataset if you get a message from the same channel U twice
-  infos2x = -np.mean(np.log2(np.mean(np.exp(-bhat_distance_mats*2), axis=-1)), axis=-1)
+  infos2x1 = -np.mean(np.log2(np.mean(np.exp(-bhat_distance_mats*2), axis=-1)), axis=-1)
+  infos2x2 = -np.mean(np.log2(np.mean(np.exp(-bhat_distance_mats2*2), axis=-1)), axis=-1)
   for ind1 in range(bhat_distance_mats.shape[0]):
-    for ind2 in range(ind1, bhat_distance_mats.shape[0]):
-      info1 = infos[ind1]
-      info2 = infos[ind2]
-      info11 = infos2x[ind1]
-      info22 = infos2x[ind2]
-      info12 = -np.mean(np.log2(np.mean(np.exp(-(bhat_distance_mats[ind1]+bhat_distance_mats[ind2])), axis=-1)), axis=-1)
+    for ind2 in range(ind1*symmetric_mat, bhat_distance_mats2.shape[0]):
+      info1 = infos1[ind1]
+      info2 = infos2[ind2]
+      info11 = infos2x1[ind1]
+      info22 = infos2x2[ind2]
+      info12 = -np.mean(np.log2(np.mean(np.exp(-(bhat_distance_mats[ind1]+bhat_distance_mats2[ind2])), axis=-1)), axis=-1)
 
       nmi = (info1+info2-info12) / np.sqrt((2*info1-info11)*(2*info2-info22))
       vi = info12*2 - info11 - info22
 
       pairwise_nmi[ind1, ind2] = nmi
-      pairwise_nmi[ind2, ind1] = nmi
       pairwise_vi[ind1, ind2] = vi
-      pairwise_vi[ind2, ind1] = vi
+
+      if symmetric_mat:
+        pairwise_nmi[ind2, ind1] = nmi
+        pairwise_vi[ind2, ind1] = vi
 
   return pairwise_nmi, pairwise_vi
