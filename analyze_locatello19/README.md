@@ -2,7 +2,7 @@
 
 Pipeline:
 1. Download the desired models.  We've included a shell script that will do it for you, `download_trained_models.sh`.
-Just find the start and end model indices
+Just find the start and end model indices (**inclusive**)
 [described here in `disentanglement_lib`](https://github.com/google-research/disentanglement_lib/tree/master?tab=readme-ov-file#pretrained-disentanglement_lib-modules).
 
 > Example calls:
@@ -10,6 +10,34 @@ Just find the start and end model indices
 > - `./download_trained_models.sh 0 49`: downloads the 50 `dsprites` $\beta$-VAE models with $\beta=1$.
 >
 > - `./download_trained_models.sh 7500 7799`: downloads the 300 `smallnorb` FactorVAE models corresponding all six values of $\gamma$.
+>
+> For convenience, here's a guide to the model indices, where every 300 models spans 6 hyperparameter values for 50 runs each:
+>
+> $\beta$-VAE: 0-299
+>
+> FactorVAE: 300-599
+>
+> DIP-VAE-I: 600-899
+>
+> DIP-VAE-II: 900-1199
+>
+> $\beta$-TCVAE: 1200-1499
+>
+> Annealed VAE (CCI-VAE): 1500-1799
+>
+> Then add the offset for the dataset:
+>
+> `dsprites`: 0
+>
+> `noisy-dsprites`: 1800
+>
+> `color-dsprites`: 3600
+>
+> `scream-dsprites`: 5400
+>
+> `smallnorb`: 7200
+>
+> `cars3d`: 9000
 
 2. Run the analysis script, `structure_from_trained_models.py`.  First, it prepares a random fingerprint set of images by calling `dataset_helper_fns.py`.
 Then it computes the Bhattacharyya matrices for the model numbers you want to compare, the pairwise NMI and VI matrices, and finally assesses structure using OPTICS and visualizes in the same manner as in the manuscript.
@@ -20,6 +48,6 @@ Then it computes the Bhattacharyya matrices for the model numbers you want to co
 >You can also (of course) add your own dataset; for these simple architectures it just takes one GPU-day to train an ensemble of 50 models.
 >- `outdir`: where you want stuff saved.
 >- `model_dir`: the directory containing the trained models
->- `model_start`, `model_end`: the range of models to include in the analysis.  E.g., 0 to 50 would analyze the 50 $\beta$-VAEs for `dsprites` with $\beta=1$.
+>- `model_start`, `model_end`: the range of models (**exclusive**) to include in the analysis.  E.g., 0 to 50 would analyze the 50 $\beta$-VAEs for `dsprites` with $\beta=1$.
 
     
