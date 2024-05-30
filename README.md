@@ -10,6 +10,8 @@ Contents:
 - `utils.py`: Code to compute pairwise Bhattacharyya distances given a list of Gaussian posterior means and log variances for a sample of datapoints, and then our proposed generalizations for the pairwise normalized mutual information (NMI) and variation of information (VI) values given a list of Bhattacharyya distance matrices
 - `fashion_mnist_example.ipynb`: an iPython notebook that reproduces the workflow to analyze structure in ensembles of trained channels
 - `ensemble_learning.ipynb`: an iPython notebook that reproduces the ensemble learning example from Sec. 4.4 of the manuscript.
+- `analyze_locatello19/`: a directory with code to process any of the ensembles of models released with [Challenging Common Assumptions in the Unsupervised Learning of
+Disentangled Representations (Locatello et al., 2019)](https://proceedings.mlr.press/v97/locatello19a/locatello19a.pdf)
 
 The iPython notebook `fashion_mnist_example.ipynb` will download accessory files (zipped and uploaded to [google drive](https://drive.google.com/file/d/1LU5Lcf-wPR9UnOfWNVyXuZRxDQeOzXzX/view?usp=drive_link))
 - `trained_fashion_mnist_beta4/`: one $\beta$-VAE model trained on Fashion-MNIST with $\beta=4$,
