@@ -48,8 +48,8 @@ def get_args():
 	parser = argparse.ArgumentParser(description='')
 	parser.add_argument('--dataset', default='dsprites',
 		choices=['dsprites', 'smallnorb', 'cars3d'])
-	parser.add_argument('--outdir', default='.')
-	parser.add_argument('--model_dir', default='downloaded_models')
+	parser.add_argument('--outdir', default='artifacts/')
+	parser.add_argument('--model_dir', default='downloaded_models/')
 	parser.add_argument('--model_start', type=int, default=0)
 	parser.add_argument('--model_end', type=int, default=50)
 
