@@ -1,6 +1,6 @@
 # representation-space-info-comparison
-Code accompanying "Comparing information content of representation spaces for disentanglement with VAE ensembles" (2024)
-by Kieran A Murphy, Sam Dillavou, and Dani S. Bassett.
+Code accompanying "Comparing information content of representation spaces for disentanglement with VAE ensembles" (2024) 
+by Kieran A Murphy, Sam Dillavou, and Dani S. Bassett [[arxiv](https://arxiv.org/abs/2405.21042)]
 
 **TL;DR:** We propose a lightweight methodology for comparing the information content of channels of VAEs.  Given an ensemble of O(50) trained VAEs, we find pieces of information that are repeatedly found across training runs, allowing an empirical study of information fragmentation in the context of disentanglement.
 
