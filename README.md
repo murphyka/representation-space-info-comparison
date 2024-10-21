@@ -21,6 +21,7 @@ example from Sec. 4.4 of the manuscript.
 
 ## Quickest route to channel similarity results:
 > `./download_trained_models.sh 250 269`
+>
 > `structure_from_trained_models.py --model_start 250 --model_end 270`
 
 This will:
