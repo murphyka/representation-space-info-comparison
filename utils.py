@@ -28,16 +28,16 @@ def bhattacharyya_dist_mat(mus, logvars):
   sigma_mat = np.expand_dims(sigma_diag, -1) * np.expand_dims(np.ones_like(sigma_diag), -2) * np.reshape(np.eye(embedding_dimension), [1, 1, embedding_dimension, embedding_dimension])
   sigma_mat_inv = np.expand_dims(1./sigma_diag, -1) * np.expand_dims(np.ones_like(sigma_diag), -2) * np.reshape(np.eye(embedding_dimension), [1, 1, embedding_dimension, embedding_dimension])
 
-  determinant_sigma = np.prod(sigma_diag, axis=-1)
-  determinant_sigma1 = np.exp(np.sum(logvars1, axis=-1))
-  determinant_sigma2 = np.exp(np.sum(logvars2, axis=-1))
+  log_determinant_sigma = np.sum(np.log(sigma_diag), axis=-1)
+  log_determinant_sigma1 = np.sum(logvars1, axis=-1)
+  log_determinant_sigma2 = np.sum(logvars2, axis=-1)
   term1 = 0.125 * (difference_mus_T @ sigma_mat_inv @ difference_mus).reshape([N, N])
-  term2 = 0.5 * np.log(determinant_sigma / np.sqrt(determinant_sigma1 * determinant_sigma2))
+  term2 = 0.5 * (log_determinant_sigma - 0.5 * (log_determinant_sigma1  + log_determinant_sigma2))
   return term1+term2
 
-@tf.function
+@tf.function(experimental_relax_shapes=True)
 def bhattacharyya_dist_mat_tf(mus, logvars):
-  """Tensorflow version of the bhat computation (for speed when optimizing)
+  """Computes Bhattacharyya distances between multivariate Gaussians.
   Args:
     mus: [N, d] float array of the means of the Gaussians.
     logvars: [N, d] float array of the log variances of the Gaussians (so we're assuming diagonal
@@ -48,26 +48,30 @@ def bhattacharyya_dist_mat_tf(mus, logvars):
   N = tf.shape(mus)[0]
   embedding_dimension = tf.shape(mus)[1]
 
-  ## Manually broadcast
+  mus = tf.cast(mus, tf.float64)
+  logvars = tf.cast(logvars, tf.float64)
+
+  ## Manually broadcast in case either M or N is 1
   mus1 = tf.tile(tf.expand_dims(mus, 1), [1, N, 1])
   logvars1 = tf.tile(tf.expand_dims(logvars, 1), [1, N, 1])
   mus2 = tf.tile(tf.expand_dims(mus, 0), [N, 1, 1])
   logvars2 = tf.tile(tf.expand_dims(logvars, 0), [N, 1, 1])
-  difference_mus = mus1 - mus2  # [N, N, embedding_dimension]; we want [N, N, embedding_dimension, 1]
+  difference_mus = mus1 - mus2  # [N, M, embedding_dimension]; we want [N, M, embedding_dimension, 1]
   difference_mus = tf.expand_dims(difference_mus, -1)
   difference_mus_T = tf.transpose(difference_mus, [0, 1, 3, 2])
 
-  sigma_diag = 0.5 * (tf.exp(logvars1) + tf.exp(logvars2))  ## [N, N, embedding_dimension], but we want a diag mat [N, N, embedding_dimension, embedding_dimension]
-  sigma_mat = tf.expand_dims(sigma_diag, -1) * tf.expand_dims(tf.ones_like(sigma_diag), -2) * tf.reshape(tf.eye(embedding_dimension), [1, 1, embedding_dimension, embedding_dimension])
-  sigma_mat_inv = tf.expand_dims(1./sigma_diag, -1) * tf.expand_dims(tf.ones_like(sigma_diag), -2) * tf.reshape(tf.eye(embedding_dimension), [1, 1, embedding_dimension, embedding_dimension])
+  sigma_diag = 0.5 * (tf.exp(logvars1) + tf.exp(logvars2))  ## [N, M, embedding_dimension], but we want a diag mat [N, M, embedding_dimension, embedding_dimension]
+  # sigma_mat = np.apply_along_axis(np.diag, -1, sigma_diag)
+  sigma_mat = tf.expand_dims(sigma_diag, -1) * tf.expand_dims(tf.ones_like(sigma_diag, dtype=tf.float64), -2) * tf.reshape(tf.eye(embedding_dimension, dtype=tf.float64), [1, 1, embedding_dimension, embedding_dimension])
+  # sigma_mat_inv = np.apply_along_axis(np.diag, -1, 1./sigma_diag)
+  sigma_mat_inv = tf.expand_dims(1./sigma_diag, -1) * tf.expand_dims(tf.ones_like(sigma_diag, dtype=tf.float64), -2) * tf.reshape(tf.eye(embedding_dimension, dtype=tf.float64), [1, 1, embedding_dimension, embedding_dimension])
 
-  determinant_sigma = tf.math.reduce_prod(sigma_diag, axis=-1)
-  determinant_sigma1 = tf.exp(tf.reduce_sum(logvars1, axis=-1))
-  determinant_sigma2 = tf.exp(tf.reduce_sum(logvars2, axis=-1))
+  log_determinant_sigma = tf.reduce_sum(tf.math.log(sigma_diag), axis=-1)
+  log_determinant_sigma1 = tf.reduce_sum(logvars1, axis=-1)
+  log_determinant_sigma2 = tf.reduce_sum(logvars2, axis=-1)
   term1 = 0.125 * tf.reshape(difference_mus_T @ sigma_mat_inv @ difference_mus, [N, N])
-  term2 = 0.5 * tf.math.log(determinant_sigma / tf.sqrt(determinant_sigma1 * determinant_sigma2))
+  term2 = 0.5 * (log_determinant_sigma - 0.5 * (log_determinant_sigma1 + log_determinant_sigma2))
   return term1+term2
-
 
 def compute_pairwise_similarities(bhat_distance_mats, bhat_distance_mats2=None):
   """Computes the full set of pairwise VI and NMI comparisons given a list of Bhattacharyya distance matrices.
@@ -112,3 +116,71 @@ def compute_pairwise_similarities(bhat_distance_mats, bhat_distance_mats2=None):
         pairwise_vi[ind2, ind1] = vi
 
   return pairwise_nmi, pairwise_vi
+
+@tf.function(experimental_relax_shapes=True)
+def compute_likelihoods_mc(samples, mus, logvars, diag=False):
+  """Computes likelihoods of samples u given a set of posterior parameters mus and logvars.
+
+  Args:
+    samples: [N, d] float64 tensor of points in the d-dimensional latent space. 
+    mus: [M, d] float tensor of the means of M posteriors. 
+    logvars: [M, d] float tensor of the log variances of M posteriors. 
+    diag: Whether there is a 1:1 correspondence between the samples and the posteriors,
+      and you want to get the likelihood under the posterior (True) or under the aggregated posterior (False)
+  Returns:
+    [N] float tensor of the likelihoods of the samples. 
+  """
+  mus = tf.cast(mus, tf.float64)
+  logvars = tf.cast(logvars, tf.float64)
+  sample_size = tf.shape(samples)[0]
+  evaluation_batch_size = tf.shape(mus)[0]
+  embedding_dimension = tf.shape(mus)[-1]
+  stddevs = tf.exp(logvars/2.)
+  # Expand dimensions to broadcast and compute the pairwise distances between
+  # the sampled points and the centers of the conditional distributions
+  samples = tf.reshape(samples,
+    [sample_size, 1, embedding_dimension])
+  mus = tf.reshape(mus, [1, evaluation_batch_size, embedding_dimension])
+  distances_ui_muj = samples - mus
+
+  normalized_distances_ui_muj = distances_ui_muj / tf.reshape(stddevs, [1, evaluation_batch_size, embedding_dimension])
+  p_ui_cond_xj = tf.exp(-tf.reduce_sum(normalized_distances_ui_muj**2, axis=-1)/2. - \
+    tf.reshape(tf.reduce_sum(logvars, axis=-1), [1, evaluation_batch_size])/2.)
+  normalization_factor = (2.*np.pi)**(tf.cast(embedding_dimension, tf.float64)/2.)
+  p_ui_cond_xj = p_ui_cond_xj / normalization_factor
+  if diag:
+    return tf.linalg.diag_part(p_ui_cond_xj)
+  else:
+    return tf.reduce_sum(p_ui_cond_xj, axis=-1)
+
+
+def monte_carlo_info(mus, logvars, number_random_samples=20000):
+  """Estimates the information I(U;X) transmitted about a dataset by the complete list of posteriors.
+
+  Args:
+    mus: [M, d] float array of the means of M posteriors, where M is the length of the dataset
+    logvars: [M, d] float array of the log variances of M posteriors. 
+    number_random_samples: the number of Monte Carlo samples
+  Returns:
+    The estimate of the mutual information, in bits, and its standard error.
+  """
+  sample_size = 2000  ## How many samples to evaluate at a time
+  chunk_eval_size = 10_000  ## How many data points to evaluate at a time; the involved matrices will be [sample_size, chunk_eval_size]
+  info_estimates = []
+  emb_dim = mus.shape[-1]
+  for rand_sample in range(number_random_samples//sample_size):
+    rand_inds = np.random.choice(mus.shape[0], size=sample_size)
+    rand_sample = tf.random.normal(shape=(sample_size, emb_dim),
+                                  mean=mus[rand_inds],
+                                  stddev=tf.exp(logvars[rand_inds]/2.))
+    rand_sample = tf.cast(rand_sample, tf.float64)
+    posterior_probs = compute_likelihoods_mc(rand_sample, mus[rand_inds], logvars[rand_inds], diag=True)
+    marginal_probs = np.zeros((sample_size))
+    for start_ind in range(0, mus.shape[0], chunk_eval_size):
+      end_ind = min(start_ind+chunk_eval_size, mus.shape[0])
+      marginal_probs = marginal_probs + compute_likelihoods(rand_sample, mus[start_ind:end_ind], logvars[start_ind:end_ind])
+    marginal_probs = marginal_probs / mus.shape[0]
+
+    info_estimates.append(tf.math.log(posterior_probs/marginal_probs))
+  info_estimates = np.array(info_estimates)/np.log(2)
+  return np.mean(info_estimates), np.std(info_estimates)/np.sqrt((number_random_samples//sample_size)*sample_size)
