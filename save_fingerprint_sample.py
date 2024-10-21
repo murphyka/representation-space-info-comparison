@@ -7,8 +7,6 @@ for cars3d and smallnorb are the exact same as what was trained on.
 Copied from the corresponding files in 
 https://github.com/google-research/disentanglement_lib/tree/master/disentanglement_lib/data/ground_truth
 
-dsprites is simple enough to trust tensorflow_datasets, and its code can be easily modified for whatever
-dataset you want to use
 '''
 
 import numpy as np
@@ -20,7 +18,6 @@ import PIL
 def save_fingerprint_images(dataset_name, out_fname, data_dir='.', fingerprint_size=1000):
 	####################################################################################################################
 	if dataset_name == 'dsprites':
-		import tensorflow_datasets as tfds
 		dataset_labels = ['label_orientation', 'label_shape', 'label_scale', 'label_x_position', 'label_y_position']
 		dset, dset_info = tfds.load(dataset_name, data_dir=data_dir, with_info=True, decoders={
 		    'image': tfds.decode.SkipDecoding(),
