@@ -34,7 +34,8 @@ This will:
 
 ## Quickest route to comparing full latent spaces:
 > `./download_trained_models.sh 7750 7755`
-Execute code in `Comparing_full_latent_spaces_with_Monte_Carlo.ipynb`, to evaluate consistency across FactorVAEs trained on smallnorb (or change to whatever dataset+models you have downloaded).
+
+Then execute code in `Comparing_full_latent_spaces_with_Monte_Carlo.ipynb`, to evaluate consistency across FactorVAEs trained on smallnorb (or change to whatever dataset+models you have downloaded).
 
 ## Longer explanation of the channel similarity pipeline:
 1. Download the desired models. Find the start and end model indices (**inclusive**)
