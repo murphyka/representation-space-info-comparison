@@ -1,39 +1,42 @@
-# representation-space-info-comparison
-Code accompanying "Comparing information content of representation spaces for disentanglement with VAE ensembles" (2024) 
+# Code accompanying "Comparing the information content of probabilistic representation spaces" (2024) 
 by Kieran A Murphy, Sam Dillavou, and Dani S. Bassett [[arxiv](https://arxiv.org/abs/2405.21042)]
-
-**TL;DR:** We propose a lightweight methodology for comparing the information content of channels of VAEs.  Given an ensemble of O(50) trained VAEs, we find pieces of information that are repeatedly found across training runs, allowing an empirical study of information fragmentation in the context of disentanglement.
-
-![Figure from the manuscript that gives a high level overview of the proposed method.](/images/high_level.png)
-
-Contents:
-- `utils.py`: Code to compute pairwise Bhattacharyya distances given a list of Gaussian posterior means and log variances for a sample of datapoints, and then our proposed generalizations for the pairwise normalized mutual information (NMI) and variation of information (VI) values given a list of Bhattacharyya distance matrices
-- `fashion_mnist_example.ipynb`: an iPython notebook that reproduces the workflow to analyze structure in ensembles of trained channels
-- `ensemble_learning.ipynb`: an iPython notebook that reproduces the ensemble learning example from Sec. 4.4 of the manuscript.
-- `analyze_locatello19/`: a directory with code to process any of the ensembles of models released with [Challenging Common Assumptions in the Unsupervised Learning of
-Disentangled Representations (Locatello et al., 2019)](https://proceedings.mlr.press/v97/locatello19a/locatello19a.pdf)
-
-The iPython notebook `fashion_mnist_example.ipynb` will download accessory files (zipped and uploaded to [google drive](https://drive.google.com/file/d/1LU5Lcf-wPR9UnOfWNVyXuZRxDQeOzXzX/view?usp=drive_link))
-- `trained_fashion_mnist_beta4/`: one $\beta$-VAE model trained on Fashion-MNIST with $\beta=4$,
-- `bhats.npy`: a sample of 300 $\times$ 300 Bhattacharyya distance matrices, coming from 25 $\beta$-VAEs trained on Fashion-MNIST with 10 latent dimensions each, so 250 matrices (175MB).
-- `utils.py`: The same file in this repository, just provided for convenience.
-  
-The notebook calculates distinguishability matrices for the channels of the sample model, calculating Bhattacharyya coefficients with a random sample of images from Fashion-MNIST, and then computes the pairwise VI and NMI values from the included Bhattacharyya matrices.
-The VI and NMI values are then clustered with sklearn's OPTICS and visualized in the same manner as Figs. 4 and 5.  Below, we reproduce the parts of those figures for the MNIST and Fashion-MNIST datasets, along with latent traversals.
-![Figure from the manuscript showing structure found in an ensemble of beta VAEs trained on the MNIST dataset.  A block diagonal matrix of the similarities between channels indicates that there are channels repeatedly found throughout the ensemble. Latent traversals from each hot spot visualize the information content.](/images/mnist.png)
-
-![Figure from the manuscript showing structure found in an ensemble of beta VAEs trained on the Fashion MNIST dataset.  A block diagonal matrix of the similarities between channels indicates that there are channels repeatedly found throughout the ensemble. Latent traversals from each hot spot visualize the information content.](/images/fashion_mnist.png)
-
----
-### Full pipeline to analyze the models that were publicly released with Locatello et al. (2019)
-
-While we trained MNIST and Fashion-MNIST ensembles ourselves, all other ensembles used models uploaded with [`disentanglement_lib`](https://github.com/google-research/disentanglement_lib/tree/master) for [Challenging Common Assumptions in the Unsupervised Learning of Disentangled Representations (Locatello et al. 2019)](https://proceedings.mlr.press/v97/locatello19a.html).  An example is the `cars3d` analysis reproduced below.
 
 ![Figure from the manuscript showing structure found in an ensemble of beta VAEs trained on the cars3d dataset.  A block diagonal matrix of the similarities between channels indicates that there are channels repeatedly found throughout the ensemble. Latent traversals from each hot spot visualize the information content.](/images/cars3d.png)
 
-Pipeline:
-1. Download the desired models.  For convenience, we've included a shell script that will do it for you, `download_trained_models.sh`.
-Just find the start and end model indices (**inclusive**)
+TLDR: We compare probabilistic representation spaces by the information they contain about the dataset.  We look at the consistency of information contained in individual channels of VAEs and InfoGANs, in the full latent spaces, and we perform model fusion.
+
+Contents:
+- `Similarity_comparison_synthetic.ipynb`: Notebook to reproduce the results from Sec. 4.1
+of the manuscript, where different similarity measures are used to compare nine
+synthesized one- and two-dimensional representation spaces.
+- `Comparing_full_latent_spaces_with_Monte_Carlo.ipynb`: Notebook with code for Sec. 4.3
+of the manuscript, comparing the information content of full latent spaces using Monte Carlo estimates.
+- `Rep_space_fusion_SO(2).ipynb`: Notebook to reproduce the fusion learning 
+example from Sec. 4.4 of the manuscript.
+
+- `utils.py`: Code to for computing the relevant mutual informations -- using Bhattacharyya fingerprints and using Monte Carlo.
+- `structure_from_trained_models.py`: Code to compute similarity matrices, as in Fig. 3, using Bhattacharyya fingerprints.
+- `save_fingerprint_sample.py`: Code to grab datasets and save a random sample for use when fingerprinting.
+- `download_trained_models.sh`: a convenience shell script to download models for analysis.
+
+## Quickest route to channel similarity results:
+> `./download_trained_models.sh 250 269`
+> `structure_from_trained_models.py --model_start 250 --model_end 270`
+
+This will:
+1. Download 20 beta-VAE models trained on `dsprites` into `trained_models/`. 
+2. Download the `dsprites` dataset from `tensorflow_datasets`.
+3. Save a sample of randomly selected images from the dataset to `artifacts/dsprites_fingerprint.npz`.
+4. Compute Bhattacharrya matrices for every channel in each of the 20 models, \~10 seconds.
+5. Compute all pairwise NMI and VI values for the 20x20 matrix, \~30 seconds.
+6. Save a visualization for each NMI and VI in the same format as Fig. 3.  
+
+## Quickest route to comparing full latent spaces:
+> `./download_trained_models.sh 7750 7755`
+Execute code in `Comparing_full_latent_spaces_with_Monte_Carlo.ipynb`, to evaluate consistency across FactorVAEs trained on smallnorb (or change to whatever dataset+models you have downloaded).
+
+## Longer explanation of the channel similarity pipeline:
+1. Download the desired models. Find the start and end model indices (**inclusive**)
 [described here in `disentanglement_lib`](https://github.com/google-research/disentanglement_lib/tree/master?tab=readme-ov-file#pretrained-disentanglement_lib-modules).
 
 > **Example calls:**
@@ -70,7 +73,7 @@ Just find the start and end model indices (**inclusive**)
 >
 > `cars3d`: 9000
 
-2. Run the analysis script, `structure_from_trained_models.py`.  First, it prepares a random fingerprint set of images by calling `dataset_helper_fns.py`; for `dsprites` it just uses `tensorflow_datasets`, but for the other datasets you'll need to download them following the instructions in `disentanglement_lib`.
+2. Run the analysis script, `structure_from_trained_models.py`.  First, it prepares a random fingerprint set of images by calling `save_fingerprint_sample.py`; for `dsprites` it just uses `tensorflow_datasets`, but for the other datasets you'll need to download them following the instructions in `disentanglement_lib`.
 Then the script computes the Bhattacharyya matrices for the model numbers you want to compare, the pairwise NMI and VI matrices, and finally visualizes structure using OPTICS in the same manner as in the manuscript.  For speed, you'll want to try a `fingerprint_size` of 100 or 300 before seeing if 1000 makes any difference.
 
 >**Args:**
@@ -81,5 +84,5 @@ Then the script computes the Bhattacharyya matrices for the model numbers you wa
 >- `model_dir`: the directory containing the trained models
 >- `model_start`, `model_end`: the range of models (**exclusive**) to include in the analysis.  E.g., 0 to 50 would analyze the 50 $\beta$-VAEs for `dsprites` with $\beta=1$.
 
-    
 
+![Figure from the manuscript showing structure found in an ensemble of beta VAEs trained on the Fashion MNIST dataset.  A block diagonal matrix of the similarities between channels indicates that there are channels repeatedly found throughout the ensemble. Latent traversals from each hot spot visualize the information content.](/images/fashion_mnist.png)
