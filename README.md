@@ -1,5 +1,5 @@
-# Code accompanying "Comparing the information content of probabilistic representation spaces" (2024) 
-by Kieran A Murphy, Sam Dillavou, and Dani S. Bassett [[arxiv](https://arxiv.org/abs/2405.21042)]
+# Code accompanying "Comparing the information content of probabilistic representation spaces" (TMLR 2025) 
+by Kieran A Murphy, Sam Dillavou, and Dani S. Bassett [[TMLR](https://openreview.net/forum?id=adhsMqURI1)] [[arxiv](https://arxiv.org/abs/2405.21042)]
 
 ![Figure from the manuscript showing structure found in an ensemble of beta VAEs trained on the cars3d dataset.  A block diagonal matrix of the similarities between channels indicates that there are channels repeatedly found throughout the ensemble. Latent traversals from each hot spot visualize the information content.](/images/cars3d.png)
 
